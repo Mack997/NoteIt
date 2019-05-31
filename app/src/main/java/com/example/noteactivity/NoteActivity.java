@@ -1,19 +1,28 @@
 package com.example.noteactivity;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Spinner;
 
+import java.util.HashSet;
 import java.util.List;
 
 public class NoteActivity extends AppCompatActivity {
+
+    int noteId ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,16 +31,47 @@ public class NoteActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Spinner spinnerCourse = (Spinner) findViewById(R.id.spinner_courses);
+        EditText editNoteText = findViewById(R.id.edit_note);
 
-        List<CourseInfo> courses = DataManager.getInstance().getCourses();
+        Intent editNote = getIntent();
+        noteId = editNote.getIntExtra("noteId", -1);
 
-        ArrayAdapter<CourseInfo> adapterCourses =
-                new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, courses);
+        if (noteId != -1){
+            editNoteText.setText(NoteListActivity.notes.get(noteId));
+            editNoteText.setSelection(editNoteText.getText().length());
+        }else{
+            NoteListActivity.notes.add("");
+            noteId = NoteListActivity.notes.size() - 1;
+            NoteListActivity.noteAdapter.notifyDataSetChanged();
+        }
 
-        adapterCourses.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        spinnerCourse.setAdapter(adapterCourses);
+        editNoteText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence data, int i, int i1, int i2) {
+
+                NoteListActivity.notes.set(noteId, String.valueOf(data));
+                NoteListActivity.noteAdapter.notifyDataSetChanged();
+
+                SharedPreferences sharedPreferences = getApplicationContext()
+                        .getSharedPreferences("com.example.noteactivity", Context.MODE_PRIVATE);
+
+                HashSet<String> set = new HashSet<>(NoteListActivity.notes);
+
+                sharedPreferences.edit().putStringSet("notes", set).apply();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
 
     }
 
@@ -42,18 +82,4 @@ public class NoteActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 }
